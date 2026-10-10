@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - CampusOpportunity</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="navbar"></div>
+<section class="hero">
+    <h1>Discover Your Next Opportunity</h1>
+    <p>CampusOpportunity is a single place for students to find internships, hackathons, placement drives,
+       scholarships and competitions, check their eligibility, save favourites and track every application.</p>
+    <a class="btn btn-white" href="opportunities.html">Explore Opportunities</a>
+    <a class="btn btn-outline-white" href="register.html">Register</a>
+    <a class="btn btn-outline-white" href="login.html">Login</a>
+</section>
+
+<div class="container">
+    <h2 class="page-title" style="text-align:center">What you can do</h2>
+    <p class="page-sub" style="text-align:center">No more scattered links, missed deadlines or guessing about eligibility.</p>
+    <div class="grid">
+        <div class="card feature-card"><div class="icon">🔍</div><h3>Find Opportunities</h3>
+            <p>Search and filter by type, location, CGPA and branch.</p></div>
+        <div class="card feature-card"><div class="icon">✅</div><h3>Check Eligibility</h3>
+            <p>See instantly if you qualify – and exactly why not.</p></div>
+        <div class="card feature-card"><div class="icon">⭐</div><h3>Save Opportunities</h3>
+            <p>Bookmark interesting opportunities for later.</p></div>
+        <div class="card feature-card"><div class="icon">📋</div><h3>Track Applications</h3>
+            <p>Follow every application from Applied to Selected.</p></div>
+        <div class="card feature-card"><div class="icon">⏰</div><h3>Manage Deadlines</h3>
+            <p>Open, approaching and closed deadlines at a glance.</p></div>
+    </div>
+</div>
+<footer>CampusOpportunity – College Project • All opportunities shown are fictional demo data</footer>
+<script src="script.js"></script>
+<script>
+    renderNavbar("index.html");
+    if (getStudent()) { /* already logged in: navbar shows dashboard links */ }
+</script>
+</body>
+</html>

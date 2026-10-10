@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - CampusOpportunity</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="navbar"></div>
+<div class="container">
+    <div class="card form-card">
+        <h2 class="page-title">Student Login</h2>
+        <p class="page-sub">Welcome back! Login with your email and password.</p>
+        <div id="msg" class="message"></div>
+        <div class="form-group"><label for="email">Email</label>
+            <input type="email" id="email" placeholder="you@example.com"></div>
+        <div class="form-group"><label for="password">Password</label>
+            <input type="password" id="password" placeholder="Your password"></div>
+        <button class="btn btn-primary" style="width:100%" onclick="login()">Login</button>
+        <p style="margin-top:14px;text-align:center">New here? <a href="register.html">Create an account</a></p>
+    </div>
+</div>
+<footer>CampusOpportunity – College Project • All opportunities shown are fictional demo data</footer>
+<script src="script.js"></script>
+<script>
+    renderNavbar("login.html");
+
+    async function login() {
+        hideMessage("msg");
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+        if (!email || !password) { showMessage("msg", "Please enter email and password"); return; }
+
+        try {
+            const student = await apiRequest("/students/login", "POST", { email: email, password: password });
+            saveStudent(student);
+            window.location.href = "dashboard.html";
+        } catch (e) {
+            showMessage("msg", e.message);
+        }
+    }
+
+    document.getElementById("password").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
+</script>
+</body>
+</html>

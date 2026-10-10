@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opportunity Details - CampusOpportunity</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="navbar"></div>
+<div class="container">
+    <a href="opportunities.html">← Back to opportunities</a>
+    <div id="msg" class="message" style="margin-top:12px"></div>
+    <div class="card" style="margin-top:14px" id="details">Loading...</div>
+</div>
+<footer>CampusOpportunity – College Project • All opportunities shown are fictional demo data</footer>
+<script src="script.js"></script>
+<script>
+    renderNavbar("opportunities.html");
+    const student = getStudent();
+    const opportunityId = getParam("id");
+    let savedId = null;   // id of the SavedOpportunity row, if this opportunity is saved
+
+    async function loadDetails() {
+        if (!opportunityId) { showMessage("msg", "No opportunity selected"); return; }
+        try {
+            const o = await apiRequest("/opportunities/" + opportunityId);
+
+            if (student) {
+                const saved = await apiRequest("/saved/student/" + student.id);
+                const found = saved.find(s => s.opportunity.id === o.id);
+                savedId = found ? found.id : null;
+            }
+
+            const skills = splitSkills(o.requiredSkills).map(s => '<span class="badge">' + esc(s) + '</span>').join(" ");
+            const link = o.applicationLink
+                ? '<a href="' + esc(o.applicationLink) + '" target="_blank" rel="noopener">' + esc(o.applicationLink) + '</a>'
+                : "Not provided";
+
+            document.getElementById("details").innerHTML =
+                '<div class="card-top"><span class="badge type-' + esc(o.type) + '">' + esc(o.type) + '</span>' +
+                deadlineBadge(o.deadline) + '</div>' +
+                '<h2 style="margin:10px 0 2px">' + esc(o.title) + '</h2>' +
+                '<p class="company">' + esc(o.company) + '</p>' +
+                row("Description", esc(o.description || "Not provided")) +
+                row("Location", esc(o.location || "Not specified")) +
+                row("Deadline", formatDate(o.deadline)) +
+                row("Minimum CGPA", o.minCgpa ? esc(o.minCgpa) : "None") +
+                row("Eligible Branch", esc(o.eligibleBranch || "All")) +
+                row("Graduation Year", o.graduationYear ? esc(o.graduationYear) : "Any") +
+                row("Required Skills", skills || "None") +
+                (o.maxBacklogs !== null && o.maxBacklogs !== undefined ? row("Max Backlogs", esc(o.maxBacklogs)) : "") +
+                row("Application Link", link) +
+                '<div class="detail-actions">' +
+                '<button class="btn btn-primary" onclick="checkEligibility()">Check Eligibility</button>' +
+                '<button class="btn btn-secondary" id="saveBtn" onclick="toggleSave()">' + saveLabel() + '</button>' +
+                '<button class="btn btn-success" onclick="applyNow()">Apply</button>' +
+                '</div>';
+        } catch (e) {
+            document.getElementById("details").innerHTML = "";
+            showMessage("msg", e.message);
+        }
+    }
+
+    function row(label, valueHtml) {
+        return '<div class="detail-row"><div class="k">' + label + '</div><div>' + valueHtml + '</div></div>';
+    }
+
+    function saveLabel() { return savedId ? "★ Saved (click to remove)" : "☆ Save Opportunity"; }
+
+    function needLogin() {
+        if (!student) {
+            alert("Please login first.");
+            window.location.href = "login.html";
+            return true;
+        }
+        return false;
+    }
+
+    function checkEligibility() {
+        if (needLogin()) return;
+        window.location.href = "eligibility.html?id=" + opportunityId;
+    }
+
+    async function toggleSave() {
+        if (needLogin()) return;
+        hideMessage("msg");
+        try {
+            if (savedId) {
+                await apiRequest("/saved/" + savedId, "DELETE");
+                savedId = null;
+                showMessage("msg", "Removed from saved", "success");
+            } else {
+                const saved = await apiRequest("/saved", "POST",
+                    { studentId: student.id, opportunityId: Number(opportunityId) });
+                savedId = saved.id;
+                showMessage("msg", "Opportunity saved!", "success");
+            }
+            document.getElementById("saveBtn").textContent = saveLabel();
+        } catch (e) {
+            showMessage("msg", e.message);
+        }
+    }
+
+    async function applyNow() {
+        if (needLogin()) return;
+        hideMessage("msg");
+        try {
+            // warn the student if they are not eligible, but let them decide
+            const result = await apiRequest("/opportunities/" + opportunityId + "/eligibility/" + student.id);
+            if (!result.eligible) {
+                const ok = confirm("You may not be eligible:\n\n- " + result.reasons.join("\n- ") +
+                    "\n\nDo you still want to apply?");
+                if (!ok) return;
+            }
+            await apiRequest("/applications", "POST",
+                { studentId: student.id, opportunityId: Number(opportunityId) });
+            showMessage("msg", "Application submitted! Track it on the Applications page.", "success");
+        } catch (e) {
+            showMessage("msg", e.message);
+        }
+    }
+
+    loadDetails();
+</script>
+</body>
+</html>

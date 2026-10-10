@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - CampusOpportunity</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="navbar"></div>
+<div class="container">
+    <div class="card form-card form-wide">
+        <h2 class="page-title">Create Student Account</h2>
+        <p class="page-sub">Your profile is used to check eligibility for opportunities.</p>
+        <div id="msg" class="message"></div>
+        <div class="form-row">
+            <div class="form-group"><label for="name">Name *</label><input type="text" id="name"></div>
+            <div class="form-group"><label for="email">Email *</label><input type="email" id="email"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label for="password">Password *</label><input type="password" id="password"></div>
+            <div class="form-group"><label for="branch">Branch</label><select id="branch"></select></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label for="cgpa">CGPA</label>
+                <input type="number" id="cgpa" step="0.01" min="0" max="10" placeholder="e.g. 8.2"></div>
+            <div class="form-group"><label for="graduationYear">Graduation Year</label>
+                <input type="number" id="graduationYear" min="2020" max="2040" placeholder="e.g. 2028"></div>
+        </div>
+        <div class="form-group"><label for="skills">Skills</label>
+            <input type="text" id="skills" placeholder="Java, SQL, HTML">
+            <div class="hint">Separate skills with commas</div></div>
+        <div class="form-group"><label for="interests">Interests</label>
+            <input type="text" id="interests" placeholder="Web Development, Data Science"></div>
+        <div class="form-group"><label for="backlogs">Backlogs</label>
+            <input type="number" id="backlogs" min="0" value="0"></div>
+        <button class="btn btn-primary" style="width:100%" onclick="register()">Register</button>
+        <p style="margin-top:14px;text-align:center">Already registered? <a href="login.html">Login</a></p>
+    </div>
+</div>
+<footer>CampusOpportunity – College Project • All opportunities shown are fictional demo data</footer>
+<script src="script.js"></script>
+<script>
+    renderNavbar("register.html");
+    fillBranchSelect("branch", "-- Select branch --");
+
+    async function register() {
+        hideMessage("msg");
+        const student = {
+            name: document.getElementById("name").value.trim(),
+            email: document.getElementById("email").value.trim(),
+            password: document.getElementById("password").value,
+            branch: document.getElementById("branch").value,
+            cgpa: parseFloat(document.getElementById("cgpa").value) || 0,
+            graduationYear: parseInt(document.getElementById("graduationYear").value) || null,
+            skills: document.getElementById("skills").value.trim(),
+            interests: document.getElementById("interests").value.trim(),
+            backlogs: parseInt(document.getElementById("backlogs").value) || 0
+        };
+        if (!student.name || !student.email || !student.password) {
+            showMessage("msg", "Name, email and password are required");
+            return;
+        }
+        try {
+            const saved = await apiRequest("/students/register", "POST", student);
+            saveStudent(saved);
+            window.location.href = "dashboard.html";
+        } catch (e) {
+            showMessage("msg", e.message);
+        }
+    }
+</script>
+</body>
+</html>

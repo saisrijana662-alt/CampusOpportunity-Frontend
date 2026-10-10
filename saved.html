@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saved - CampusOpportunity</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="navbar"></div>
+<div class="container">
+    <h2 class="page-title">Saved Opportunities</h2>
+    <p class="page-sub">Opportunities you bookmarked for later.</p>
+    <div id="msg" class="message"></div>
+    <div class="grid" id="list">Loading...</div>
+</div>
+<footer>CampusOpportunity – College Project • All opportunities shown are fictional demo data</footer>
+<script src="script.js"></script>
+<script>
+    const student = requireLogin();
+    renderNavbar("saved.html");
+
+    async function loadSaved() {
+        try {
+            const saved = await apiRequest("/saved/student/" + student.id);
+            let html = "";
+            saved.forEach(s => {
+                html += opportunityCard(s.opportunity,
+                    '<button class="btn btn-danger btn-sm" onclick="removeSaved(' + s.id + ')">Remove</button>');
+            });
+            document.getElementById("list").innerHTML = html ||
+                '<div class="empty">Nothing saved yet. <a href="opportunities.html">Browse opportunities</a></div>';
+        } catch (e) {
+            document.getElementById("list").innerHTML = "";
+            showMessage("msg", e.message);
+        }
+    }
+
+    async function removeSaved(id) {
+        try {
+            await apiRequest("/saved/" + id, "DELETE");
+            loadSaved();
+        } catch (e) {
+            showMessage("msg", e.message);
+        }
+    }
+
+    if (student) loadSaved();
+</script>
+</body>
+</html>

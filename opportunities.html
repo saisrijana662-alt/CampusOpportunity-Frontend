@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opportunities - CampusOpportunity</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="navbar"></div>
+<div class="container">
+    <h2 class="page-title">Opportunities</h2>
+    <p class="page-sub">Browse, search and filter. (Demo opportunities are fictional.)</p>
+    <div id="msg" class="message"></div>
+
+    <div class="filters">
+        <div><label for="search">Search (title / company)</label>
+            <input type="text" id="search" placeholder="e.g. internship, DemoSoft"></div>
+        <div><label for="type">Type</label><select id="type"></select></div>
+        <div><label for="location">Location</label><input type="text" id="location" placeholder="e.g. Hyderabad"></div>
+        <div><label for="minCgpa">Minimum CGPA</label>
+            <input type="number" id="minCgpa" step="0.1" min="0" max="10" placeholder="e.g. 7.5"></div>
+        <div><label for="branch">Branch</label><select id="branch"></select></div>
+        <button class="btn btn-primary" onclick="loadOpportunities()">Search</button>
+        <button class="btn btn-secondary" onclick="clearFilters()">Clear</button>
+    </div>
+    <div class="hint" style="margin:-12px 0 16px">Minimum CGPA filter shows opportunities that require at most that CGPA.</div>
+
+    <div class="grid" id="list">Loading...</div>
+</div>
+<footer>CampusOpportunity – College Project • All opportunities shown are fictional demo data</footer>
+<script src="script.js"></script>
+<script>
+    renderNavbar("opportunities.html");
+    fillTypeSelect("type", "All types");
+    fillBranchSelect("branch", "All branches");
+
+    async function loadOpportunities() {
+        hideMessage("msg");
+        const params = new URLSearchParams();
+        const search = document.getElementById("search").value.trim();
+        const type = document.getElementById("type").value;
+        const location = document.getElementById("location").value.trim();
+        const minCgpa = document.getElementById("minCgpa").value;
+        const branch = document.getElementById("branch").value;
+
+        if (search) params.append("search", search);
+        if (type) params.append("type", type);
+        if (location) params.append("location", location);
+        if (minCgpa) params.append("minCgpa", minCgpa);
+        if (branch) params.append("branch", branch);
+
+        try {
+            const list = await apiRequest("/opportunities?" + params.toString());
+            let html = "";
+            list.forEach(o => { html += opportunityCard(o); });
+            document.getElementById("list").innerHTML = html || '<div class="empty">No opportunities found.</div>';
+        } catch (e) {
+            document.getElementById("list").innerHTML = "";
+            showMessage("msg", e.message);
+        }
+    }
+
+    function clearFilters() {
+        ["search", "type", "location", "minCgpa", "branch"].forEach(id => document.getElementById(id).value = "");
+        loadOpportunities();
+    }
+
+    document.getElementById("search").addEventListener("keydown", e => { if (e.key === "Enter") loadOpportunities(); });
+    loadOpportunities();
+</script>
+</body>
+</html>

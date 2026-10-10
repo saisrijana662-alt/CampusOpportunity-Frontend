@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - CampusOpportunity</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="navbar"></div>
+<div class="container">
+    <h2 class="page-title">Admin Panel</h2>
+    <p class="page-sub">Add, edit and delete opportunities. (Simple college demo – no admin login.)</p>
+    <div id="msg" class="message"></div>
+
+    <div class="card" style="margin-bottom:24px">
+        <h3 id="formTitle" style="margin-bottom:12px">Add Opportunity</h3>
+        <input type="hidden" id="oppId">
+        <div class="form-row">
+            <div class="form-group"><label for="title">Title *</label><input type="text" id="title"></div>
+            <div class="form-group"><label for="company">Company *</label><input type="text" id="company"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label for="type">Type *</label><select id="type"></select></div>
+            <div class="form-group"><label for="location">Location</label><input type="text" id="location"></div>
+        </div>
+        <div class="form-group"><label for="description">Description</label><textarea id="description"></textarea></div>
+        <div class="form-row">
+            <div class="form-group"><label for="deadline">Deadline</label><input type="date" id="deadline"></div>
+            <div class="form-group"><label for="minCgpa">Minimum CGPA</label><input type="number" id="minCgpa" step="0.1" min="0" max="10"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label for="eligibleBranch">Eligible Branch</label><input type="text" id="eligibleBranch" placeholder="All  or  CSE, IT">
+                <div class="hint">Use "All" or comma separated branches</div></div>
+            <div class="form-group"><label for="graduationYear">Graduation Year</label><input type="number" id="graduationYear" placeholder="Leave empty for any year"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label for="requiredSkills">Required Skills</label><input type="text" id="requiredSkills" placeholder="Java, SQL">
+                <div class="hint">Comma separated</div></div>
+            <div class="form-group"><label for="maxBacklogs">Max Backlogs (optional)</label><input type="number" id="maxBacklogs" min="0" placeholder="Leave empty for no limit"></div>
+        </div>
+        <div class="form-group"><label for="applicationLink">Application Link</label><input type="text" id="applicationLink" placeholder="https://..."></div>
+        <button class="btn btn-primary" id="submitBtn" onclick="saveOpportunity()">Add Opportunity</button>
+        <button class="btn btn-secondary" id="cancelBtn" style="display:none" onclick="resetForm()">Cancel Edit</button>
+    </div>
+
+    <h3 style="margin-bottom:10px">All Opportunities</h3>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>ID</th><th>Title</th><th>Company</th><th>Type</th><th>Deadline</th><th>Actions</th></tr></thead>
+            <tbody id="rows"><tr><td colspan="6">Loading...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+<footer>CampusOpportunity – College Project • All opportunities shown are fictional demo data</footer>
+<script src="script.js"></script>
+<script>
+    renderNavbar("admin.html");
+    fillTypeSelect("type", "-- Select type --");
+
+    let allOpportunities = [];
+
+    async function loadList() {
+        try {
+            allOpportunities = await apiRequest("/opportunities");
+            let html = "";
+            allOpportunities.forEach(o => {
+                html += '<tr><td>' + o.id + '</td><td>' + esc(o.title) + '</td><td>' + esc(o.company) +
+                    '</td><td><span class="badge type-' + esc(o.type) + '">' + esc(o.type) + '</span></td><td>' +
+                    formatDate(o.deadline) + ' ' + deadlineBadge(o.deadline) + '</td><td>' +
+                    '<button class="btn btn-secondary btn-sm" onclick="editOpportunity(' + o.id + ')">Edit Opportunity</button> ' +
+                    '<button class="btn btn-danger btn-sm" onclick="deleteOpportunity(' + o.id + ')">Delete Opportunity</button>' +
+                    '</td></tr>';
+            });
+            document.getElementById("rows").innerHTML = html || '<tr><td colspan="6" class="empty">No opportunities</td></tr>';
+        } catch (e) {
+            showMessage("msg", e.message);
+        }
+    }
+
+    function val(id) { return document.getElementById(id).value.trim(); }
+
+    // Add (no id) or update (id filled by Edit)
+    async function saveOpportunity() {
+        hideMessage("msg");
+        const data = {
+            title: val("title"),
+            company: val("company"),
+            type: val("type"),
+            description: val("description"),
+            location: val("location"),
+            deadline: val("deadline") || null,
+            minCgpa: parseFloat(val("minCgpa")) || 0,
+            eligibleBranch: val("eligibleBranch") || "All",
+            graduationYear: parseInt(val("graduationYear")) || null,
+            requiredSkills: val("requiredSkills"),
+            applicationLink: val("applicationLink"),
+            maxBacklogs: val("maxBacklogs") === "" ? null : parseInt(val("maxBacklogs"))
+        };
+        if (!data.title || !data.company || !data.type) {
+            showMessage("msg", "Title, company and type are required");
+            return;
+        }
+        const id = val("oppId");
+        try {
+            if (id) {
+                await apiRequest("/opportunities/" + id, "PUT", data);
+                showMessage("msg", "Opportunity updated", "success");
+            } else {
+                await apiRequest("/opportunities", "POST", data);
+                showMessage("msg", "Opportunity added", "success");
+            }
+            resetForm();
+            loadList();
+        } catch (e) {
+            showMessage("msg", e.message);
+        }
+    }
+
+    function editOpportunity(id) {
+        const o = allOpportunities.find(x => x.id === id);
+        if (!o) return;
+        document.getElementById("oppId").value = o.id;
+        document.getElementById("title").value = o.title || "";
+        document.getElementById("company").value = o.company || "";
+        document.getElementById("type").value = o.type || "";
+        document.getElementById("description").value = o.description || "";
+        document.getElementById("location").value = o.location || "";
+        document.getElementById("deadline").value = o.deadline || "";
+        document.getElementById("minCgpa").value = o.minCgpa ?? "";
+        document.getElementById("eligibleBranch").value = o.eligibleBranch || "";
+        document.getElementById("graduationYear").value = o.graduationYear ?? "";
+        document.getElementById("requiredSkills").value = o.requiredSkills || "";
+        document.getElementById("maxBacklogs").value = o.maxBacklogs ?? "";
+        document.getElementById("applicationLink").value = o.applicationLink || "";
+        document.getElementById("formTitle").textContent = "Edit Opportunity #" + o.id;
+        document.getElementById("submitBtn").textContent = "Save Changes";
+        document.getElementById("cancelBtn").style.display = "inline-block";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    async function deleteOpportunity(id) {
+        if (!confirm("Delete this opportunity? Related applications and saved entries will also be removed.")) return;
+        try {
+            await apiRequest("/opportunities/" + id, "DELETE");
+            showMessage("msg", "Opportunity deleted", "success");
+            loadList();
+        } catch (e) {
+            showMessage("msg", e.message);
+        }
+    }
+
+    function resetForm() {
+        ["oppId", "title", "company", "type", "description", "location", "deadline", "minCgpa",
+         "eligibleBranch", "graduationYear", "requiredSkills", "maxBacklogs", "applicationLink"]
+            .forEach(id => document.getElementById(id).value = "");
+        document.getElementById("formTitle").textContent = "Add Opportunity";
+        document.getElementById("submitBtn").textContent = "Add Opportunity";
+        document.getElementById("cancelBtn").style.display = "none";
+    }
+
+    loadList();
+</script>
+</body>
+</html>

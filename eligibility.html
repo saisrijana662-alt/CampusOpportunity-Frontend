@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eligibility - CampusOpportunity</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="navbar"></div>
+<div class="container">
+    <a href="#" id="backLink">← Back to opportunity</a>
+    <h2 class="page-title" style="margin-top:12px">Eligibility Check</h2>
+    <p class="page-sub" id="oppName"></p>
+    <div id="msg" class="message"></div>
+    <div id="result">Checking...</div>
+</div>
+<footer>CampusOpportunity – College Project • All opportunities shown are fictional demo data</footer>
+<script src="script.js"></script>
+<script>
+    const student = requireLogin();
+    renderNavbar("opportunities.html");
+    const opportunityId = getParam("id");
+    document.getElementById("backLink").href = "opportunity-details.html?id=" + opportunityId;
+
+    async function checkEligibility() {
+        try {
+            const opp = await apiRequest("/opportunities/" + opportunityId);
+            document.getElementById("oppName").textContent = opp.title + " – " + opp.company;
+
+            const result = await apiRequest("/opportunities/" + opportunityId + "/eligibility/" + student.id);
+            let html;
+            if (result.eligible) {
+                html = '<div class="result-box result-ok"><h2>✅ Eligible</h2>' +
+                    '<p>You are eligible for this opportunity.</p></div>';
+            } else {
+                html = '<div class="result-box result-no"><h2>❌ Not Eligible</h2>' +
+                    '<p>You do not meet the following requirements:</p><ul class="reason-list">';
+                result.reasons.forEach(r => { html += '<li>❌ ' + esc(r) + '</li>'; });
+                html += '</ul><p style="margin-top:14px"><a href="profile.html">Update your profile</a> if your details have changed.</p></div>';
+            }
+            document.getElementById("result").innerHTML = html;
+        } catch (e) {
+            document.getElementById("result").innerHTML = "";
+            showMessage("msg", e.message);
+        }
+    }
+    if (student) checkEligibility();
+</script>
+</body>
+</html>
