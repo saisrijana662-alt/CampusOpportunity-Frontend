@@ -2,7 +2,7 @@
 // CampusOpportunity - common JavaScript used by every page
 // ===================================================================
 
-const API_BASE_URL = "const API_BASE_URL = "https://campusopportunity-backend.onrender.com/api";";
+ const API_BASE_URL = "https://campusopportunity-backend.onrender.com/api";
 
 const BRANCHES = ["CSE", "IT", "ECE", "EEE", "MECH", "CIVIL", "AIDS", "AIML"];
 const TYPES = ["Internship", "Hackathon", "Placement", "Scholarship", "Competition"];
